@@ -20,3 +20,4 @@ class Coder():
         __ret = ''.join([chr(int(_)) for _ in Coder.__inter])
         Coder._hashed.append(__ret)
         return __ret
+
