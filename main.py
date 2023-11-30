@@ -4,28 +4,38 @@ from discord import (
     utils as ut
 )
 from requests import (
-    get
+    get,
+    post,
+    Response
 )
 from json import (
-    loads
+    loads,
+    load
 )
 from random import (
     choice
 )
 from time import (
-    localtime as lt
+    localtime as lt,
+    daylight as dl
+)
+from typing import (
+    TypeVar
 )
 from discord.ext import commands
+import urls
+
+"""
+Hey there future committee!
+
+I've tried to profusely document this bot to allow for anyone with a limited knowledge of Python to update it.
+
+If you're still confused please visit the listed sites below for more information:
+PyDiscord Docs - https://discordpy.readthedocs.io/en/stable/intro.html
+Python 3.11 Docs - https://docs.python.org/3/
+"""
 
 client = commands.Bot(command_prefix='-')
-
-URLS = {
-    "villager": 'https://obufilsoc.com/imgs/villager-r.png',
-    "creeper": 'https://obufilsoc.com/imgs/creeper-r.png',
-    "wave_1": 'https://obufilsoc.com/imgs/wave.png',
-    "wave_3": 'https://obufilsoc.com/imgs/wave_3.png',
-    "kanye": 'https://api.kanye.rest/'
-}
 
 CMD_LIST = {
     '-h': "Displays commands",
@@ -40,6 +50,16 @@ SLAPS = ['hard', 'soft', 'strong', 'delicate', 'humongous', 'devastating', 'bitc
 
 SERVER_ID = 1156034805033619536
 
+TOKEN = ""
+
+DIFFICULTY = "Normal"
+
+JSON = TypeVar('JSON')
+DATA = load(open('local-data/data.json'))
+
+
+def validate(url: str, dump: JSON) -> Response:
+    return post(url, json=dump)
 
 @client.event
 async def on_ready():
@@ -49,7 +69,12 @@ async def on_ready():
 
 @client.event
 async def on_message(msg):
+
     ct = msg.content.startswith
+
+    print(msg.content)
+
+    await msg.channel.send(input())
 
     if ct('-h'):
         """
@@ -70,8 +95,8 @@ async def on_message(msg):
                                 -joinmc: {CMD_LIST['-joinmc']}
                                 """,
                     color=0x6C3428)
-        embed.set_thumbnail(url=URLS["villager"])
-        embed.set_image(url=URLS["wave_1"])
+        embed.set_thumbnail(url=urls.u_get("villager"))
+        embed.set_image(url=urls.u_get("wave_1"))
         await msg.channel.send(embed=embed)
 
     if ct("-inspire"):
@@ -80,7 +105,7 @@ async def on_message(msg):
         
         :rtype -> None
         """
-        await msg.channel.send(f"A wise man once said '{loads(get(URLS['kanye']).text)['quote']}'")
+        await msg.channel.send(f"A wise man once said '{loads(get(urls.u_get('kanye')).text)['quote']}'")
 
     if ct("-slap"):
         """
@@ -107,6 +132,7 @@ async def on_message(msg):
                     L:raise -> Request failure
         """
         u = msg.content.split('-joinmc ', 1)
+        validate("https://user.auth.xboxlive.com/user/authenticate", DATA)
         if len(u) < 2:
             await msg.channel.send(embed=
             ebd
@@ -144,14 +170,24 @@ async def on_message(msg):
         """
         with open("local-data/logins.txt", 'r') as f:
             players = ''.join(f.readlines()).split('\n')
-            store = ["**Server data:**", "Server time: ~", "Server age: ~",
-                     "Server difficulty: Normal", "", "**Active players:**"]
+            validate("https://user.auth.xboxlive.com/user/authenticate", DATA)
+
+            store = ["**Server data:**",
+                     f"Server time: {'Morning' if dl else 'Night'}",
+                     f"Server age: {(lt().tm_mon * 30 + lt().tm_mday) - 296} days",
+                     f"Server difficulty: {DIFFICULTY}",
+                     "",
+                     "**Active players:**"]
+
             for i in players:
                 store.append(i)
+
             embed = ebd(title="OBU TROPAS",
-                        description='\n'.join(store), colour=0x04225)
-            embed.set_thumbnail(url=URLS["creeper"])
-            embed.set_image(url=URLS["wave_3"])
+                        description='\n'.join(store),
+                        colour=0x04225)
+
+            embed.set_thumbnail(url=urls.u_get("creeper"))
+            embed.set_image(url=urls.u_get("wave_3"))
             await msg.channel.send(embed=embed)
 
     if ct('-website'):
@@ -236,4 +272,4 @@ async def on_message(msg):
             await msg.channel.send(embed=error_embed)
 
 
-client.run("MTE1Njk1NTM2MjE4OTExNTU5Mw.GPY7sm.JJRh5vY-DNPetneNz-y2zFQPZpG-BcvpIt75Fc")
+client.run(TOKEN)
